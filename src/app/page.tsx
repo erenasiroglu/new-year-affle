@@ -1,101 +1,226 @@
-import Image from "next/image";
+"use client";
+
+import { useState } from "react";
+import { Input } from "@/components/ui/input";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent } from "@/components/ui/card";
+
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+
+type DrawMethod = "classic" | "mutual";
+
+const drawMethods = {
+  classic: "Klasik Çekiliş: Herkes rastgele birine hediye alır",
+};
 
 export default function Home() {
-  return (
-    <div className="grid grid-rows-[20px_1fr_20px] items-center justify-items-center min-h-screen p-8 pb-20 gap-16 sm:p-20 font-[family-name:var(--font-geist-sans)]">
-      <main className="flex flex-col gap-8 row-start-2 items-center sm:items-start">
-        <Image
-          className="dark:invert"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={180}
-          height={38}
-          priority
-        />
-        <ol className="list-inside list-decimal text-sm text-center sm:text-left font-[family-name:var(--font-geist-mono)]">
-          <li className="mb-2">
-            Get started by editing{" "}
-            <code className="bg-black/[.05] dark:bg-white/[.06] px-1 py-0.5 rounded font-semibold">
-              src/app/page.tsx
-            </code>
-            .
-          </li>
-          <li>Save and see your changes instantly.</li>
-        </ol>
+  const [participants, setParticipants] = useState<string[]>([]);
+  const [newParticipant, setNewParticipant] = useState("");
+  const [selectedMethod, setSelectedMethod] = useState<DrawMethod | null>(null);
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  const [showResults, setShowResults] = useState<boolean>(false);
+  const [drawResults, setDrawResults] = useState<
+    { giver: string; receiver: string }[]
+  >([]);
+  const [revealedCount, setRevealedCount] = useState(0);
 
-        <div className="flex gap-4 items-center flex-col sm:flex-row">
-          <a
-            className="rounded-full border border-solid border-transparent transition-colors flex items-center justify-center bg-foreground text-background gap-2 hover:bg-[#383838] dark:hover:bg-[#ccc] text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <Image
-              className="dark:invert"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={20}
-              height={20}
-            />
-            Deploy now
-          </a>
-          <a
-            className="rounded-full border border-solid border-black/[.08] dark:border-white/[.145] transition-colors flex items-center justify-center hover:bg-[#f2f2f2] dark:hover:bg-[#1a1a1a] hover:border-transparent text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5 sm:min-w-44"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Read our docs
-          </a>
+  const addParticipant = () => {
+    if (
+      newParticipant.trim() &&
+      !participants.includes(newParticipant.trim())
+    ) {
+      setParticipants([...participants, newParticipant.trim()]);
+      setNewParticipant("");
+    }
+  };
+
+  const removeParticipant = (name: string) => {
+    setParticipants(participants.filter((p) => p !== name));
+  };
+
+  const performDraw = () => {
+    const results: { giver: string; receiver: string }[] = [];
+    let available = [...participants];
+    const givers = [...participants];
+
+    givers.forEach((giver) => {
+      const possibleReceivers = available.filter((p) => p !== giver);
+      const receiver =
+        possibleReceivers[Math.floor(Math.random() * possibleReceivers.length)];
+      results.push({ giver, receiver });
+      available = available.filter((p) => p !== receiver);
+    });
+
+    setDrawResults(results);
+    setShowResults(true);
+  };
+
+  return (
+    <main className="min-h-screen bg-[#1a472a] p-8 cursor-[url('/pointer.png'),_auto]">
+      <div className="max-w-5xl mx-auto grid grid-cols-1 md:grid-cols-[1fr,1fr] gap-6">
+        <div className="space-y-6">
+          <Card className="bg-white bg-opacity-95 shadow-xl">
+            <CardContent className="p-5">
+              <div className="space-y-4">
+                <h2 className="text-xl font-bold text-center text-green-800">
+                  🎄 Katılımcılar
+                </h2>
+                <div className="flex space-x-2">
+                  <Input
+                    className="text-base"
+                    placeholder="Katılımcı adı girin"
+                    value={newParticipant}
+                    onChange={(e) => setNewParticipant(e.target.value)}
+                    onKeyDown={(e) => e.key === "Enter" && addParticipant()}
+                  />
+                  <Button
+                    onClick={addParticipant}
+                    className="bg-red-600 hover:bg-red-700 px-4"
+                  >
+                    Ekle
+                  </Button>
+                </div>
+
+                <div>
+                  <h3 className="text-base font-semibold mb-2">
+                    Katılımcılar ({participants.length})
+                  </h3>
+                  <div className="max-h-[200px] overflow-y-auto">
+                    {participants.map((participant) => (
+                      <div
+                        key={participant}
+                        className="flex justify-between items-center bg-slate-100 p-2 rounded mb-1.5 text-base"
+                      >
+                        {participant}
+                        <Button
+                          variant="ghost"
+                          onClick={() => removeParticipant(participant)}
+                          className="h-7 w-7"
+                        >
+                          ✖
+                        </Button>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+
+          <Card className="bg-white bg-opacity-95 shadow-xl">
+            <CardContent className="p-5">
+              <div className="space-y-4">
+                <h2 className="text-xl font-bold text-center text-green-800">
+                  🎅 Çekiliş Kuralları
+                </h2>
+                <Select
+                  onValueChange={(value: DrawMethod) =>
+                    setSelectedMethod(value)
+                  }
+                >
+                  <SelectTrigger className="text-base">
+                    <SelectValue placeholder="Çekiliş Yöntemi Seçin" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {Object.entries(drawMethods).map(
+                      ([method, description]) => (
+                        <SelectItem
+                          key={method}
+                          value={method}
+                          className="text-base"
+                        >
+                          {description}
+                        </SelectItem>
+                      )
+                    )}
+                  </SelectContent>
+                </Select>
+                <Button
+                  onClick={performDraw}
+                  disabled={!selectedMethod || participants.length < 3}
+                  className="w-full bg-red-600 hover:bg-red-700 text-base py-5"
+                >
+                  Çekilişi Başlat
+                </Button>
+              </div>
+            </CardContent>
+          </Card>
         </div>
-      </main>
-      <footer className="row-start-3 flex gap-6 flex-wrap items-center justify-center">
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
+
+        <Card
+          className="bg-white bg-opacity-95 shadow-xl h-fit"
+          onClick={() =>
+            revealedCount < drawResults.length &&
+            setRevealedCount(revealedCount + 1)
+          }
         >
-          <Image
-            aria-hidden
-            src="/file.svg"
-            alt="File icon"
-            width={16}
-            height={16}
-          />
-          Learn
-        </a>
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/window.svg"
-            alt="Window icon"
-            width={16}
-            height={16}
-          />
-          Examples
-        </a>
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://nextjs.org?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/globe.svg"
-            alt="Globe icon"
-            width={16}
-            height={16}
-          />
-          Go to nextjs.org →
-        </a>
-      </footer>
-    </div>
+          <CardContent className="p-5">
+            <div className="space-y-4">
+              <h2 className="text-xl font-bold text-center text-green-800">
+                🎁 Sonuçlar
+              </h2>
+              {drawResults.length === 0 ? (
+                <div className="text-center text-gray-500 py-8">
+                  <p className="text-base">Katılımcıları ekleyip</p>
+                  <p className="text-base">çekilişi başlatın</p>
+                  <div className="mt-4 text-4xl">🎄</div>
+                </div>
+              ) : (
+                <>
+                  <p className="text-center text-gray-600 text-sm mb-4 animate-bounce">
+                    {revealedCount < drawResults.length ? (
+                      <span className="bg-red-100 px-3 py-1 rounded-full">
+                        🎅 Eşleşmeleri görmek için tıklayın!
+                      </span>
+                    ) : (
+                      <span className="text-green-600">
+                        🎄 Tüm eşleşmeler açıklandı!
+                      </span>
+                    )}
+                  </p>
+                  <div className="space-y-3 max-h-[500px] overflow-y-auto">
+                    {drawResults.map((result, index) => (
+                      <div
+                        key={index}
+                        className={`transform transition-all duration-700 ${
+                          index < revealedCount
+                            ? "translate-y-0 opacity-100 blur-none scale-100"
+                            : "translate-y-4 opacity-0 blur-sm scale-95 pointer-events-none"
+                        }`}
+                        style={{ transitionDelay: `${index * 300}ms` }}
+                      >
+                        <Card
+                          className={`
+                          bg-green-50 p-3 
+                          ${index === revealedCount - 1 ? "animate-wiggle" : ""}
+                          transition-all duration-500
+                        `}
+                        >
+                          <p className="text-base text-center">
+                            <span className="font-bold text-red-600">
+                              {result.giver}
+                            </span>{" "}
+                            ➡️{" "}
+                            <span className="font-bold text-green-800">
+                              {result.receiver}
+                            </span>
+                          </p>
+                        </Card>
+                      </div>
+                    ))}
+                  </div>
+                </>
+              )}
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+    </main>
   );
 }
